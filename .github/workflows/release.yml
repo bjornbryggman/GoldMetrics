@@ -28,7 +28,7 @@ jobs:
     needs: [release-please-release]
     if: ${{ needs.release-please-release.outputs.release_created }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Tag major and minor versions
         run: |
           # Get the latest tag and major/minor versions from the previous step
