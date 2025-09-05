@@ -1,0 +1,58 @@
+name: Pull Request Checks
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+jobs:
+  lint-and-security:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ./src/backend
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+      - name: Install UV
+        uses: astral-sh/setup-uv@v6
+      - name: Install python
+        run: uv python install
+      - name: Initialize virtual environment
+        run: uv sync
+      - name: Lint check
+        run: uvx ruff check --preview .
+      - name: Format check
+        run: uvx ruff format --check .
+      - name: Check for security issues
+        run: bandit -r .
+  run-tests:
+    runs-on: ubuntu-latest
+    needs: [lint-and-security]
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ./src/backend
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+      - name: Install UV
+        uses: astral-sh/setup-uv@v6
+      - name: Install python
+        run: uv python install
+      - name: Initialize virtual environment
+        run: uv sync --no-dev --locked
+      - name: Run tests
+        run: uvx pytest --cov=app --cov-report=json --cov-fail-under=80  -v
+      - name: Upload Coverage JSON log
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-json
+          path: coverage.json
+      - name: Check for public secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --results=verified,unknown

@@ -39,6 +39,7 @@ class FakeResponse:
         - __aenter__: Enters the context manager.
         - __aexit__: Exits the context manager.
     """
+
     def __init__(self, status: int, json_data: dict):
         """
         Initialize the FakeResponse.
@@ -73,7 +74,7 @@ class FakeResponse:
                 history=None,
                 status=self.status,
                 message="Error",
-                headers=None
+                headers=None,
             )
 
     async def __aenter__(self):
@@ -108,6 +109,7 @@ class FakeErrorContextManager:
         - __aenter__: Raises the exception when the context is entered.
         - __aexit__: Exits the context manager.
     """
+
     def __init__(self, exception: Exception):
         """
         Initialize the FakeErrorContextManager.
@@ -151,6 +153,7 @@ class TestRateLimiter:
         - test_rate_limiter_token_generation: Tests that the RateLimiter adds tokens over time and that `acquire()` properly removes one.
         - test_rate_limiter_stop: Tests that stopping the limiter cancels the background refilling task.
     """
+
     # ====================================== #
     #               Unit Tests               #
     # ====================================== #
@@ -185,7 +188,7 @@ class TestRateLimiter:
         Assertions:
             - After stopping, the limiter's active flag (_active) is set to False.
             - The background task is either cancelled or has finished.
-         
+
         Raises:
             - AssertionError: If the background task is not cancelled or stopped.
         """
@@ -206,6 +209,7 @@ class TestAIOHTTPAPIClientAdapter:
         - test_api_client_context_manager: Tests that the AIOHTTPAPIClientAdapter properly creates and closes its session.
         - test_api_client_rate_limiter_integration: Tests that when a rate limit is set, the client's request method waits on the rate limiter.
     """
+
     # ====================================== #
     #               Unit Tests               #
     # ====================================== #
@@ -222,7 +226,9 @@ class TestAIOHTTPAPIClientAdapter:
         """
         async with AIOHTTPAPIClientAdapter(rate_limit=None, timeout=5) as client:
             # Monkey-patch session.request to always return a valid FakeResponse.
-            client.session.request = lambda method, url, **kwargs: FakeResponse(200, {"key": "value"})
+            client.session.request = lambda method, url, **kwargs: FakeResponse(
+                200, {"key": "value"}
+            )
             result = await client.request("http://example.com", method="GET")
             assert result == {"key": "value"}
 
@@ -237,14 +243,18 @@ class TestAIOHTTPAPIClientAdapter:
         Raises:
             - AssertionError: If the retry mechanism does not behave as expected.
         """
-        async with AIOHTTPAPIClientAdapter(rate_limit=None, timeout=5, max_retries=2, backoff_start=0.01) as client:
+        async with AIOHTTPAPIClientAdapter(
+            rate_limit=None, timeout=5, max_retries=2, backoff_start=0.01
+        ) as client:
             call_count = 0
 
             def fake_request(method, url, **kwargs):
                 nonlocal call_count
                 if call_count == 0:
                     call_count += 1
-                    return FakeErrorContextManager(aiohttp.ClientError("Temporary error."))
+                    return FakeErrorContextManager(
+                        aiohttp.ClientError("Temporary error.")
+                    )
                 else:
                     call_count += 1
                     return FakeResponse(200, {"retry": "succeeded"})
@@ -316,7 +326,9 @@ class TestAIOHTTPAPIClientAdapter:
             dummy_acquire = AsyncMock()
             client.rate_limiter.acquire = dummy_acquire
             # Monkey-patch the session.request to return a successful FakeResponse.
-            client.session.request = lambda method, url, **kwargs: FakeResponse(200, {"rate": "limited"})
+            client.session.request = lambda method, url, **kwargs: FakeResponse(
+                200, {"rate": "limited"}
+            )
             result = await client.request("http://example.com", method="GET")
             dummy_acquire.assert_awaited_once()
             assert result == {"rate": "limited"}

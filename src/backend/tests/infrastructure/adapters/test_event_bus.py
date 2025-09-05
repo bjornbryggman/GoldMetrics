@@ -13,6 +13,7 @@ import redis.asyncio
 
 from backend.app.infrastructure.adapters.event_bus import RedisEventStoreAdapter
 
+
 class TestRedisEventStoreAdapter:
     """
     Tests for the `RedisEventStoreAdapter` class.
@@ -28,6 +29,7 @@ class TestRedisEventStoreAdapter:
         - test_close_closes_redis_connection: Tests that the `close` method closes the Redis connection.
         - test_close_raises_redis_error: Tests that the `close` method raises a RedisError when closing the connection fails.
     """
+
     # ====================================== #
     #               Unit Tests               #
     # ====================================== #
@@ -43,14 +45,16 @@ class TestRedisEventStoreAdapter:
         Raises:
             - AssertionError: If the connection is not created or idempotency is not maintained.
         """
-        with patch('redis.asyncio.Redis.from_url', new_callable=AsyncMock) as mock_from_url:
-            event_store = RedisEventStoreAdapter('redis://test')
+        with patch(
+            "redis.asyncio.Redis.from_url", new_callable=AsyncMock
+        ) as mock_from_url:
+            event_store = RedisEventStoreAdapter("redis://test")
             await event_store.initialize()
-            mock_from_url.assert_called_once_with('redis://test')
+            mock_from_url.assert_called_once_with("redis://test")
 
             # Call initialize a second time to verify idempotency
             await event_store.initialize()
-            mock_from_url.assert_called_once_with('redis://test')
+            mock_from_url.assert_called_once_with("redis://test")
 
     async def test_initialize_raises_redis_error(self):
         """
@@ -63,11 +67,19 @@ class TestRedisEventStoreAdapter:
         Raises:
             - AssertionError: If the RedisError is not raised or the connection is initialized.
         """
-        with patch('redis.asyncio.Redis.from_url', side_effect=redis.asyncio.RedisError("Failed to initialize Redis connection pool.")) as mock_from_url:
-            event_store = RedisEventStoreAdapter('redis://test')
-            with pytest.raises(redis.asyncio.RedisError, match="Failed to initialize Redis connection pool."):
+        with patch(
+            "redis.asyncio.Redis.from_url",
+            side_effect=redis.asyncio.RedisError(
+                "Failed to initialize Redis connection pool."
+            ),
+        ) as mock_from_url:
+            event_store = RedisEventStoreAdapter("redis://test")
+            with pytest.raises(
+                redis.asyncio.RedisError,
+                match="Failed to initialize Redis connection pool.",
+            ):
                 await event_store.initialize()
-            mock_from_url.assert_called_once_with('redis://test')
+            mock_from_url.assert_called_once_with("redis://test")
             assert event_store.redis is None
 
     async def test_is_processed_returns_true_when_event_exists(self):
@@ -80,14 +92,14 @@ class TestRedisEventStoreAdapter:
         Raises:
             - AssertionError: If the method does not return True.
         """
-        event_store = RedisEventStoreAdapter('redis://test')
+        event_store = RedisEventStoreAdapter("redis://test")
         mock_redis = AsyncMock()
         event_store.redis = mock_redis
         mock_redis.exists.return_value = 1
 
-        result = await event_store.is_processed('test_event')
+        result = await event_store.is_processed("test_event")
         assert result is True
-        mock_redis.exists.assert_awaited_once_with('test_event')
+        mock_redis.exists.assert_awaited_once_with("test_event")
 
     async def test_is_processed_returns_false_when_event_does_not_exist(self):
         """
@@ -99,14 +111,14 @@ class TestRedisEventStoreAdapter:
         Raises:
             - AssertionError: If the method does not return False.
         """
-        event_store = RedisEventStoreAdapter('redis://test')
+        event_store = RedisEventStoreAdapter("redis://test")
         mock_redis = AsyncMock()
         event_store.redis = mock_redis
         mock_redis.exists.return_value = 0
 
-        result = await event_store.is_processed('test_event')
+        result = await event_store.is_processed("test_event")
         assert result is False
-        mock_redis.exists.assert_awaited_once_with('test_event')
+        mock_redis.exists.assert_awaited_once_with("test_event")
 
     async def test_is_processed_raises_redis_error(self):
         """
@@ -118,13 +130,17 @@ class TestRedisEventStoreAdapter:
         Raises:
             - AssertionError: If the RedisError is not raised.
         """
-        event_store = RedisEventStoreAdapter('redis://test')
+        event_store = RedisEventStoreAdapter("redis://test")
         mock_redis = AsyncMock()
         event_store.redis = mock_redis
-        mock_redis.exists.side_effect = redis.asyncio.RedisError("Error checking if event is processed.")
+        mock_redis.exists.side_effect = redis.asyncio.RedisError(
+            "Error checking if event is processed."
+        )
 
-        with pytest.raises(redis.asyncio.RedisError, match="Error checking if event is processed."):
-            await event_store.is_processed('test_event')
+        with pytest.raises(
+            redis.asyncio.RedisError, match="Error checking if event is processed."
+        ):
+            await event_store.is_processed("test_event")
 
     async def test_mark_as_processed_sets_event_with_expiration(self):
         """
@@ -136,12 +152,12 @@ class TestRedisEventStoreAdapter:
         Raises:
             - AssertionError: If the event is not set with the correct expiration.
         """
-        event_store = RedisEventStoreAdapter('redis://test')
+        event_store = RedisEventStoreAdapter("redis://test")
         mock_redis = AsyncMock()
         event_store.redis = mock_redis
 
-        await event_store.mark_as_processed('test_event')
-        mock_redis.set.assert_awaited_once_with('test_event', 'processed', ex=2592000)
+        await event_store.mark_as_processed("test_event")
+        mock_redis.set.assert_awaited_once_with("test_event", "processed", ex=2592000)
 
     async def test_mark_as_processed_raises_redis_error(self):
         """
@@ -153,13 +169,17 @@ class TestRedisEventStoreAdapter:
         Raises:
             - AssertionError: If the RedisError is not raised.
         """
-        event_store = RedisEventStoreAdapter('redis://test')
+        event_store = RedisEventStoreAdapter("redis://test")
         mock_redis = AsyncMock()
         event_store.redis = mock_redis
-        mock_redis.set.side_effect = redis.asyncio.RedisError("Error marking event as processed.")
+        mock_redis.set.side_effect = redis.asyncio.RedisError(
+            "Error marking event as processed."
+        )
 
-        with pytest.raises(redis.asyncio.RedisError, match="Error marking event as processed."):
-            await event_store.mark_as_processed('test_event')
+        with pytest.raises(
+            redis.asyncio.RedisError, match="Error marking event as processed."
+        ):
+            await event_store.mark_as_processed("test_event")
 
     async def test_close_closes_redis_connection(self):
         """
@@ -171,7 +191,7 @@ class TestRedisEventStoreAdapter:
         Raises:
             - AssertionError: If the connection is not closed.
         """
-        event_store = RedisEventStoreAdapter('redis://test')
+        event_store = RedisEventStoreAdapter("redis://test")
         mock_redis = AsyncMock()
         event_store.redis = mock_redis
 
@@ -188,10 +208,14 @@ class TestRedisEventStoreAdapter:
         Raises:
             - AssertionError: If the RedisError is not raised.
         """
-        event_store = RedisEventStoreAdapter('redis://test')
+        event_store = RedisEventStoreAdapter("redis://test")
         mock_redis = AsyncMock()
         event_store.redis = mock_redis
-        mock_redis.close.side_effect = redis.asyncio.RedisError("Error closing Redis connection.")
+        mock_redis.close.side_effect = redis.asyncio.RedisError(
+            "Error closing Redis connection."
+        )
 
-        with pytest.raises(redis.asyncio.RedisError, match="Error closing Redis connection."):
+        with pytest.raises(
+            redis.asyncio.RedisError, match="Error closing Redis connection."
+        ):
             await event_store.close()

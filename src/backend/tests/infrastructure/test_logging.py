@@ -23,6 +23,7 @@ class TestLogger:
         - test_initialize_logger_empty_log_level: Tests that an empty log level raises a TypeError.
         - test_logging_configuration: Tests that the logger logs messages at different levels correctly.
     """
+
     # ====================================== #
     #               Unit Tests               #
     # ====================================== #

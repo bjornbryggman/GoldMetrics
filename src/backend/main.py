@@ -63,14 +63,14 @@ def import_tsm_data(path: Path) -> dict:
         log.debug("[Process] Attempting to import TSM data...")
         with open(path, "r", encoding="utf-8") as f:
             data = f.read()
-        
+
         # Remove the variable declaration and parse the Lua table
         cleaned_data = data.replace("TradeSkillMasterDB = ", "", 1)
         parsed_data = lua.decode(cleaned_data)
-        
+
         log.info("[Event] Successfully imported TSM data.")
         return parsed_data
-        
+
     except FileNotFoundError:
         log.error("[Error] TSM file not found.")
         raise

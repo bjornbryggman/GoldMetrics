@@ -8,7 +8,17 @@ This module includes:
 - Function for mapping domain models to database tables using SQLAlchemy's imperative mapping.
 """
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Index, Integer, String, Table, func
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Table,
+    func,
+)
 from sqlalchemy.orm import registry, relationship
 from structlog import stdlib
 
@@ -34,7 +44,12 @@ exchange = Table(
     Column("countryiso2", String, nullable=False),
     Column("countryiso3", String, nullable=False),
     Column("created_at", DateTime(timezone=True), server_default=func.now()),
-    Column("modified_at", DateTime(timezone=True), server_default=func.now(), onupdate=func.now()),
+    Column(
+        "modified_at",
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    ),
 )
 
 tickers = Table(
@@ -47,7 +62,12 @@ tickers = Table(
     Column("currency", String, nullable=False),
     Column("type", String, nullable=False),
     Column("created_at", DateTime(timezone=True), server_default=func.now()),
-    Column("modified_at", DateTime(timezone=True), server_default=func.now(), onupdate=func.now()),
+    Column(
+        "modified_at",
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    ),
 )
 
 historical_data = Table(
@@ -62,7 +82,12 @@ historical_data = Table(
     Column("adjusted_close", Float, nullable=False),
     Column("volume", Integer, nullable=False),
     Column("created_at", DateTime(timezone=True), server_default=func.now()),
-    Column("modified_at", DateTime(timezone=True), server_default=func.now(), onupdate=func.now()),
+    Column(
+        "modified_at",
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    ),
 )
 
 technical_data = Table(
@@ -82,7 +107,12 @@ technical_data = Table(
     Column("avgvol_50d", Float, nullable=False),
     Column("avgvol_200d", Float, nullable=False),
     Column("created_at", DateTime(timezone=True), server_default=func.now()),
-    Column("modified_at", DateTime(timezone=True), server_default=func.now(), onupdate=func.now()),
+    Column(
+        "modified_at",
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    ),
 )
 
 
@@ -114,17 +144,27 @@ async def start_database_mappers() -> None:
         mapper_registry.map_imperatively(
             Exchange,
             exchange,
-            properties={"ticker": relationship(Ticker, uselist=False, cascade="all, delete-orphan", lazy="selectin")},
+            properties={
+                "ticker": relationship(
+                    Ticker, uselist=False, cascade="all, delete-orphan", lazy="selectin"
+                )
+            },
         )
         mapper_registry.map_imperatively(
             Ticker,
             tickers,
             properties={
                 "historical_data": relationship(
-                    HistoricalData, cascade="all, delete-orphan", collection_class=list, lazy="selectin"
+                    HistoricalData,
+                    cascade="all, delete-orphan",
+                    collection_class=list,
+                    lazy="selectin",
                 ),
                 "technical_data": relationship(
-                    TechnicalData, uselist=False, cascade="all, delete-orphan", lazy="selectin"
+                    TechnicalData,
+                    uselist=False,
+                    cascade="all, delete-orphan",
+                    lazy="selectin",
                 ),
             },
         )

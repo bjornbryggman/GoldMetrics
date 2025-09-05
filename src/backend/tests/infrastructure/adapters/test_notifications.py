@@ -11,7 +11,6 @@ import pytest
 
 from telegram import Message
 
-from backend.app.infrastructure.adapters.notifications import TelegramNotificationAdapter
 
 class TestTelegramNotificationAdapter:
     """
@@ -20,6 +19,7 @@ class TestTelegramNotificationAdapter:
     Methods:
         - test_telegram_notification: Tests that the `send_notification` method sends a message to the specified chat.
     """
+
     # ============================================= #
     #               Integration Tests               #
     # ============================================= #

@@ -30,8 +30,18 @@ def upgrade() -> None:
         sa.Column("currency", sa.String(), nullable=False),
         sa.Column("countryiso2", sa.String(), nullable=False),
         sa.Column("countryiso3", sa.String(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
-        sa.Column("modified_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
+        sa.Column(
+            "modified_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
         sa.PrimaryKeyConstraint("code"),
     )
     op.create_table(
@@ -42,8 +52,18 @@ def upgrade() -> None:
         sa.Column("exchange", sa.String(), nullable=False),
         sa.Column("currency", sa.String(), nullable=False),
         sa.Column("type", sa.String(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
-        sa.Column("modified_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
+        sa.Column(
+            "modified_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
         sa.ForeignKeyConstraint(["exchange"], ["exchange.code"]),
         sa.PrimaryKeyConstraint("code"),
     )
@@ -58,12 +78,27 @@ def upgrade() -> None:
         sa.Column("close", sa.Float(), nullable=False),
         sa.Column("adjusted_close", sa.Float(), nullable=False),
         sa.Column("volume", sa.Integer(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
-        sa.Column("modified_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
+        sa.Column(
+            "modified_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
         sa.ForeignKeyConstraint(["code"], ["tickers.code"]),
         sa.PrimaryKeyConstraint("code", "date"),
     )
-    op.create_index("ix_historical_data_date", "historical_data", [sa.text("date DESC")], unique=False)
+    op.create_index(
+        "ix_historical_data_date",
+        "historical_data",
+        [sa.text("date DESC")],
+        unique=False,
+    )
     op.create_table(
         "technical_data",
         sa.Column("code", sa.String(), nullable=False),
@@ -79,8 +114,18 @@ def upgrade() -> None:
         sa.Column("avgvol_14d", sa.Float(), nullable=False),
         sa.Column("avgvol_50d", sa.Float(), nullable=False),
         sa.Column("avgvol_200d", sa.Float(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
-        sa.Column("modified_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
+        sa.Column(
+            "modified_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
         sa.ForeignKeyConstraint(["code"], ["tickers.code"]),
         sa.PrimaryKeyConstraint("code"),
     )
@@ -112,7 +157,9 @@ def upgrade() -> None:
         )
     )
     # Add compression policy
-    conn.execute(sa.text("SELECT add_compression_policy('historical_data', INTERVAL '1d');"))
+    conn.execute(
+        sa.text("SELECT add_compression_policy('historical_data', INTERVAL '1d');")
+    )
     # ### end Alembic commands ###
 
 

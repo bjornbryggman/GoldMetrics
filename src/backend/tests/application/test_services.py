@@ -15,6 +15,7 @@ log = stdlib.get_logger(__name__)
 #               EODHD               #
 # ================================= #
 
+
 class FakeEODHDAPIClient(EODHDAPIClient):
     def __init__(self) -> None:
         """
@@ -33,7 +34,9 @@ class FakeEODHDAPIClient(EODHDAPIClient):
         list_of_test_exchanges.append(self.unformatted_fi_test_data.test_exchange_data)
         return list_of_test_exchanges
 
-    async def get_tickers(self, exchange_code: str, delisted: bool = False) -> list[dict]:
+    async def get_tickers(
+        self, exchange_code: str, delisted: bool = False
+    ) -> list[dict]:
         """
         Fetch tickers for a specific exchange, optionally including delisted tickers.
 
@@ -74,7 +77,9 @@ class FakeEODHDAPIClient(EODHDAPIClient):
             - list[dict]: A list of bulk end-of-day data for the specified exchange.
         """
         list_of_test_eod_bulk_data = []
-        list_of_test_eod_bulk_data.append(self.unformatted_fi_test_data.test_eod_bulk_data)
+        list_of_test_eod_bulk_data.append(
+            self.unformatted_fi_test_data.test_eod_bulk_data
+        )
         return list_of_test_eod_bulk_data
 
     async def __aenter__(self):
@@ -82,6 +87,7 @@ class FakeEODHDAPIClient(EODHDAPIClient):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         pass
+
 
 async def test_eodhd_service(real_dependencies) -> None:
     """
@@ -108,8 +114,12 @@ async def test_eodhd_service(real_dependencies) -> None:
     async with unit_of_work() as uow_1:
         fetched_exchange = await uow_1.financial_instrument.get_exchange("NYSE")
         fetched_ticker = await uow_1.financial_instrument.get_ticker("ABC")
-        fetched_historical_data = await uow_1.financial_instrument.get_historical_data("ABC")
-        fetched_technical_data = await uow_1.financial_instrument.get_technical_data("ABC")
+        fetched_historical_data = await uow_1.financial_instrument.get_historical_data(
+            "ABC"
+        )
+        fetched_technical_data = await uow_1.financial_instrument.get_technical_data(
+            "ABC"
+        )
         assert fetched_exchange.code == "NYSE"
         assert fetched_ticker.code == "ABC"
         assert len(fetched_historical_data) == 4

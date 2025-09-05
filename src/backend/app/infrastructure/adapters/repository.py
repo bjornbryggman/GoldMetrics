@@ -59,7 +59,9 @@ class SQLAlchemyFIARRepositoryAdapter(ports.AbstractFIARRepository):
         """
         self.session = session
 
-    async def get_ticker(self, code: str | None, all: bool = False) -> models.Ticker | None:
+    async def get_ticker(
+        self, code: str | None, all: bool = False
+    ) -> models.Ticker | None:
         """
         Retrieve tickers, either specifically or all at once.
 
@@ -89,7 +91,9 @@ class SQLAlchemyFIARRepositoryAdapter(ports.AbstractFIARRepository):
             await log.aexception("Error retrieving ticker: %s", code)
             raise
 
-    async def get_exchange(self, code: str | None, all: bool = False) -> models.Exchange | None:
+    async def get_exchange(
+        self, code: str | None, all: bool = False
+    ) -> models.Exchange | None:
         """
         Retrieve exchanges, either specifically or all at once.
 
@@ -119,7 +123,6 @@ class SQLAlchemyFIARRepositoryAdapter(ports.AbstractFIARRepository):
             await log.aexception("Error retrieving exchange: %s", code)
             raise
 
-
     async def get_historical_data(
         self, code: str, start_date: str | None = None, end_date: str | None = None
     ) -> list[models.HistoricalData]:
@@ -138,20 +141,36 @@ class SQLAlchemyFIARRepositoryAdapter(ports.AbstractFIARRepository):
             - SQLAlchemyError: If an error occurs during the database query.
         """
         try:
-            query = select(models.HistoricalData).where(models.HistoricalData.code == code)
+            query = select(models.HistoricalData).where(
+                models.HistoricalData.code == code
+            )
             if start_date:
-                converted_start_date = datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=UTC)
+                converted_start_date = datetime.strptime(
+                    start_date, "%Y-%m-%d"
+                ).replace(tzinfo=UTC)
                 query = query.where(converted_start_date <= models.HistoricalData.date)
             if end_date:
-                converted_end_date = datetime.strptime(end_date, "%Y-%m-%d").replace(tzinfo=UTC)
+                converted_end_date = datetime.strptime(end_date, "%Y-%m-%d").replace(
+                    tzinfo=UTC
+                )
                 query = query.where(converted_end_date >= models.HistoricalData.date)
             if start_date and end_date:
-                converted_start_date = datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=UTC)
-                converted_end_date = datetime.strptime(end_date, "%Y-%m-%d").replace(tzinfo=UTC)
-                query = query.where(converted_start_date <= models.HistoricalData.date >= converted_end_date)
+                converted_start_date = datetime.strptime(
+                    start_date, "%Y-%m-%d"
+                ).replace(tzinfo=UTC)
+                converted_end_date = datetime.strptime(end_date, "%Y-%m-%d").replace(
+                    tzinfo=UTC
+                )
+                query = query.where(
+                    converted_start_date
+                    <= models.HistoricalData.date
+                    >= converted_end_date
+                )
             result = await self.session.execute(query)
         except SQLAlchemyError:
-            await log.aexception("Error retrieving historical data for ticker: %s", code)
+            await log.aexception(
+                "Error retrieving historical data for ticker: %s", code
+            )
             raise
         else:
             return result.scalars().all()
@@ -170,7 +189,9 @@ class SQLAlchemyFIARRepositoryAdapter(ports.AbstractFIARRepository):
             - SQLAlchemyError: If an error occurs during the database query.
         """
         try:
-            query = select(models.TechnicalData).where(models.TechnicalData.code == code)
+            query = select(models.TechnicalData).where(
+                models.TechnicalData.code == code
+            )
             result = await self.session.execute(query)
         except SQLAlchemyError:
             await log.aexception("Error retrieving technical data for ticker: %s", code)
@@ -200,7 +221,9 @@ class SQLAlchemyFIARRepositoryAdapter(ports.AbstractFIARRepository):
             technical_data = await self.get_technical_data(code)
             historical_data = await self.get_historical_data(code, start_date, end_date)
         except SQLAlchemyError:
-            await log.aexception("Error retrieving ticker with technical and historical data: %s", code)
+            await log.aexception(
+                "Error retrieving ticker with technical and historical data: %s", code
+            )
             raise
         else:
             return ticker_data, technical_data, historical_data
@@ -218,14 +241,18 @@ class SQLAlchemyFIARRepositoryAdapter(ports.AbstractFIARRepository):
         try:
             existing_data = await self.get_technical_data(technical_data.code)
             if existing_data is None:
-                await log.aexception("Technical data with code '%s' not found.", technical_data.code)
+                await log.aexception(
+                    "Technical data with code '%s' not found.", technical_data.code
+                )
                 raise ValueError
 
             for key, value in technical_data.__dict__.items():
                 if not key.startswith("_"):
                     setattr(existing_data, key, value)
         except SQLAlchemyError:
-            await log.aexception("Error updating technical data for ticker: %s", technical_data.code)
+            await log.aexception(
+                "Error updating technical data for ticker: %s", technical_data.code
+            )
             raise
 
     async def add_ticker(self, ticker: models.Ticker) -> None:
@@ -273,10 +300,14 @@ class SQLAlchemyFIARRepositoryAdapter(ports.AbstractFIARRepository):
         try:
             self.session.add(historical_data)
         except SQLAlchemyError:
-            await log.aexception("Error adding historical data for ticker: %s", historical_data.code)
+            await log.aexception(
+                "Error adding historical data for ticker: %s", historical_data.code
+            )
             raise
 
-    async def add_historical_data_bulk(self, historical_data_list: list[models.HistoricalData]) -> None:
+    async def add_historical_data_bulk(
+        self, historical_data_list: list[models.HistoricalData]
+    ) -> None:
         """
         Add multiple historical data entries in bulk.
 
@@ -305,5 +336,7 @@ class SQLAlchemyFIARRepositoryAdapter(ports.AbstractFIARRepository):
         try:
             self.session.add(technical_data)
         except SQLAlchemyError:
-            await log.aexception("Error adding technical data for ticker: %s", technical_data.code)
+            await log.aexception(
+                "Error adding technical data for ticker: %s", technical_data.code
+            )
             raise

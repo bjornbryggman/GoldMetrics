@@ -110,7 +110,9 @@ class NotificationHandler(ports.AbstractEventHandler):
         - handle: Handles an incoming notification event by sending the notification.
     """
 
-    def __init__(self, sender: ports.AbstractNotification = bootstrap.notification) -> None:
+    def __init__(
+        self, sender: ports.AbstractNotification = bootstrap.notification
+    ) -> None:
         """
         Initialize the NotificationHandler.
 

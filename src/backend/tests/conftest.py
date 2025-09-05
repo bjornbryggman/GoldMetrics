@@ -6,7 +6,10 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncEngine
 from sqlalchemy.orm import clear_mappers
 
 from backend.app.infrastructure.container import Container
-from backend.app.infrastructure.database.orm import mapper_registry, start_database_mappers
+from backend.app.infrastructure.database.orm import (
+    mapper_registry,
+    start_database_mappers,
+)
 
 from backend.tests.fake_data import format_fi_test_data, raw_fi_test_data
 
@@ -69,7 +72,7 @@ class Bootstrap:
         self.notification = self.container.telegram_notification
         self.session_factory = self.container.session_factory
         self.unit_of_work = self.container.unit_of_work
-        
+
 
 @pytest.fixture
 async def real_dependencies():
@@ -95,7 +98,11 @@ def mock_dependencies():
 
     session_factory = MagicMock(spec=async_sessionmaker, return_value=session)
 
-    return type('mock_dependencies', (), {'session_factory': session_factory, 'session': session})()
+    return type(
+        "mock_dependencies",
+        (),
+        {"session_factory": session_factory, "session": session},
+    )()
 
 
 # ===================================== #

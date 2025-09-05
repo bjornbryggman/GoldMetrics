@@ -95,7 +95,9 @@ class SQLAlchemyUnitOfWorkAdapter(ports.AbstractUnitOfWork):
             await self.session.__aenter__()
 
             # Initialize the repository for managing financial instrument data
-            self.financial_instrument = repository.SQLAlchemyFIARRepositoryAdapter(self.session)
+            self.financial_instrument = repository.SQLAlchemyFIARRepositoryAdapter(
+                self.session
+            )
 
             await log.adebug("Database session and repository initialized.")
         except SQLAlchemyError:

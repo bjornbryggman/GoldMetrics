@@ -72,7 +72,9 @@ class Bootstrap:
         else:
             return container
 
-    async def initialize_application(self, start_logging: bool = True, start_orm: bool = True) -> None:
+    async def initialize_application(
+        self, start_logging: bool = True, start_orm: bool = True
+    ) -> None:
         """
         Initialize the application's infrastructure and start services.
 

@@ -239,7 +239,16 @@ class FinancialInstrumentAR:
         Returns:
             - tuple[HistoricalData, TechnicalData]: The filtered historical and technical data.
         """
-        historical_data_keys = {"code", "date", "open", "high", "low", "close", "adjusted_close", "volume"}
+        historical_data_keys = {
+            "code",
+            "date",
+            "open",
+            "high",
+            "low",
+            "close",
+            "adjusted_close",
+            "volume",
+        }
         technical_data_keys = {
             "code",
             "MarketCapitalization",
@@ -257,7 +266,9 @@ class FinancialInstrumentAR:
         }
 
         # Filter historical data
-        historical_data = {key: end_of_day_data.get(key) for key in historical_data_keys}
+        historical_data = {
+            key: end_of_day_data.get(key) for key in historical_data_keys
+        }
 
         # Filter technical data
         technical_data = {key: end_of_day_data.get(key) for key in technical_data_keys}

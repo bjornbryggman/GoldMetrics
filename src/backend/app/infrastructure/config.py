@@ -64,9 +64,22 @@ class PathConfig:
             self.input_dir = self.root_path / "frontend" / "input_directory"
             self.backend_dir = self.root_path / "backend"
             self.alembic_versions_dir = (
-                self.root_path / "backend" / "app" / "infrastructure" / "database" / "alembic" / "versions"
+                self.root_path
+                / "backend"
+                / "app"
+                / "infrastructure"
+                / "database"
+                / "alembic"
+                / "versions"
             )
-            self.alembic_ini = self.root_path / "backend" / "app" / "infrastructure" / "database" / "alembic.ini"
+            self.alembic_ini = (
+                self.root_path
+                / "backend"
+                / "app"
+                / "infrastructure"
+                / "database"
+                / "alembic.ini"
+            )
             self.pyproject_toml = self.root_path / "backend" / "pyproject.toml"
         except OSError as error:
             log.exception("Error resolving root path.", exc_info=error)

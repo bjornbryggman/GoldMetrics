@@ -15,7 +15,14 @@ from typing import Any, Self
 
 import aiohttp
 from structlog import stdlib
-from tenacity import WrappedFn, before_sleep_log, retry, retry_if_exception, stop_after_attempt, wait_exponential
+from tenacity import (
+    WrappedFn,
+    before_sleep_log,
+    retry,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from backend.app.application.ports import AbstractAPIClient
 
@@ -107,7 +114,11 @@ class AIOHTTPAPIClientAdapter(AbstractAPIClient):
     """
 
     def __init__(
-        self, rate_limit: int | None = None, timeout: float = 10.0, max_retries: int = 3, backoff_start: float = 1.0
+        self,
+        rate_limit: int | None = None,
+        timeout: float = 10.0,
+        max_retries: int = 3,
+        backoff_start: float = 1.0,
     ) -> None:
         """
         Initialize the GenericAPIClient.
@@ -125,7 +136,9 @@ class AIOHTTPAPIClientAdapter(AbstractAPIClient):
         self.rate_limiter = RateLimiter(rate_limit, 60) if rate_limit else None
         self.session: aiohttp.ClientSession | None = None
         self.retry_config = retry(
-            retry=retry_if_exception(lambda error: isinstance(error, aiohttp.ClientError)),
+            retry=retry_if_exception(
+                lambda error: isinstance(error, aiohttp.ClientError)
+            ),
             stop=stop_after_attempt(max_retries),
             wait=wait_exponential(multiplier=backoff_start),
             before_sleep=before_sleep_log(log, 30),
@@ -141,7 +154,9 @@ class AIOHTTPAPIClientAdapter(AbstractAPIClient):
         """
         return self.retry_config(self._request)
 
-    async def _request(self, url: str, method: str = "GET", **kwargs: dict[str, Any] | None) -> dict[str, Any]:
+    async def _request(
+        self, url: str, method: str = "GET", **kwargs: dict[str, Any] | None
+    ) -> dict[str, Any]:
         """
         Make an asynchronous HTTP request with retry capabilties and rate limiting.
 
@@ -179,7 +194,9 @@ class AIOHTTPAPIClientAdapter(AbstractAPIClient):
         Returns:
             - Self: The instance of the GenericAPIClient.
         """
-        self.session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.timeout))
+        self.session = aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=self.timeout)
+        )
         return self
 
     async def __aexit__(self, *exc_info: object) -> None:
@@ -247,14 +264,18 @@ class EODHDAPIClient(AIOHTTPAPIClientAdapter):
         """
         try:
             params = {"api_token": self.api_key, "fmt": "json"}
-            request = await self.request(url="https://eodhd.com/api/exchanges-list/", method="GET", params=params)
+            request = await self.request(
+                url="https://eodhd.com/api/exchanges-list/", method="GET", params=params
+            )
         except Exception:
             await log.aexception("Error occurred during the 'get_exchanges' request")
             raise
         else:
             return request
 
-    async def get_tickers(self, exchange_code: str, delisted: bool = False) -> list[dict]:
+    async def get_tickers(
+        self, exchange_code: str, delisted: bool = False
+    ) -> list[dict]:
         """
         Fetch tickers for a specific exchange, optionally including delisted tickers.
 
@@ -269,9 +290,15 @@ class EODHDAPIClient(AIOHTTPAPIClientAdapter):
             - Exception: If an error occurs during the request.
         """
         try:
-            params = {"api_token": self.api_key, "fmt": "json", "delisted": "1" if delisted else None}
+            params = {
+                "api_token": self.api_key,
+                "fmt": "json",
+                "delisted": "1" if delisted else None,
+            }
             request = await self.request(
-                url=f"https://eodhd.com/api/exchange-symbol-list/{exchange_code}", method="GET", params=params
+                url=f"https://eodhd.com/api/exchange-symbol-list/{exchange_code}",
+                method="GET",
+                params=params,
             )
         except Exception:
             await log.aexception("Error occurred during the 'get_tickers' request")
@@ -294,9 +321,15 @@ class EODHDAPIClient(AIOHTTPAPIClientAdapter):
         """
         try:
             params = {"api_token": self.api_key, "fmt": "json"}
-            request = await self.request(url=f"https://eodhd.com/api/eod/{ticker_code}", method="GET", params=params)
+            request = await self.request(
+                url=f"https://eodhd.com/api/eod/{ticker_code}",
+                method="GET",
+                params=params,
+            )
         except Exception:
-            await log.aexception("Error occurred during the 'get_historical_data' request")
+            await log.aexception(
+                "Error occurred during the 'get_historical_data' request"
+            )
             raise
         else:
             return request
@@ -317,10 +350,14 @@ class EODHDAPIClient(AIOHTTPAPIClientAdapter):
         try:
             params = {"api_token": self.api_key, "fmt": "json", "filter": "extended"}
             request = await self.request(
-                url=f"https://eodhd.com/api/eod-bulk-last-day/{exchange_code}", method="GET", params=params
+                url=f"https://eodhd.com/api/eod-bulk-last-day/{exchange_code}",
+                method="GET",
+                params=params,
             )
         except Exception:
-            await log.aexception("Error occurred during the 'get_eod_bulk_data' request")
+            await log.aexception(
+                "Error occurred during the 'get_eod_bulk_data' request"
+            )
             raise
         else:
             return request

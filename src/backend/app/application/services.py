@@ -20,7 +20,11 @@ from sqlalchemy.exc import SQLAlchemyError
 from structlog import stdlib
 
 from backend.app.application.events import Notification, UpdateFinancialInstruments
-from backend.app.application.ports import AbstractEventBus, AbstractEventHandler, AbstractUnitOfWork
+from backend.app.application.ports import (
+    AbstractEventBus,
+    AbstractEventHandler,
+    AbstractUnitOfWork,
+)
 from backend.app.domain import models
 from backend.app.infrastructure.adapters.api import EODHDAPIClient
 
@@ -52,7 +56,10 @@ class EODHDService:
     """
 
     def __init__(
-        self, unit_of_work: AbstractUnitOfWork, event_bus: AbstractEventBus, api_client: EODHDAPIClient
+        self,
+        unit_of_work: AbstractUnitOfWork,
+        event_bus: AbstractEventBus,
+        api_client: EODHDAPIClient,
     ) -> None:
         """
         Initialize the EODHDService.
@@ -66,7 +73,9 @@ class EODHDService:
         self.event_bus = event_bus
         self.api_client = api_client
 
-    async def update_financial_instruments(self, filters: list[str] | None = None) -> None:
+    async def update_financial_instruments(
+        self, filters: list[str] | None = None
+    ) -> None:
         """
         Entrypoint for updating financial instruments.
 
@@ -88,9 +97,12 @@ class EODHDService:
                 list_of_exchange_codes = await self.scan_exchanges()
 
             # Create tasks for scanning tickers and end-of-day data
-            ticker_processing_tasks.extend(self.scan_tickers(exchange) for exchange in list_of_exchange_codes)
+            ticker_processing_tasks.extend(
+                self.scan_tickers(exchange) for exchange in list_of_exchange_codes
+            )
             end_of_day_processing_tasks.extend(
-                self.scan_end_of_day_data(exchange) for exchange in list_of_exchange_codes
+                self.scan_end_of_day_data(exchange)
+                for exchange in list_of_exchange_codes
             )
 
             # Execute tasks concurrently
@@ -131,13 +143,23 @@ class EODHDService:
                     try:
                         await log.adebug("Processing exchange: '%s'", exchange["code"])
                         async with self.unit_of_work() as uow:
-                            formatted_exchange = models.FinancialInstrumentAR.format_exchange(exchange)
-                            existing_exchange = await uow.financial_instrument.get_exchange(formatted_exchange.code)
+                            formatted_exchange = (
+                                models.FinancialInstrumentAR.format_exchange(exchange)
+                            )
+                            existing_exchange = (
+                                await uow.financial_instrument.get_exchange(
+                                    formatted_exchange.code
+                                )
+                            )
                             if not existing_exchange:
-                                await uow.financial_instrument.add_exchange(formatted_exchange)
+                                await uow.financial_instrument.add_exchange(
+                                    formatted_exchange
+                                )
                                 await uow.commit()
                     except Exception:
-                        await log.aexception("Error processing exchange: '%s'", exchange["code"])
+                        await log.aexception(
+                            "Error processing exchange: '%s'", exchange["code"]
+                        )
                         raise
 
                 list_of_exchange_codes.append(exchange["code"])
@@ -169,7 +191,9 @@ class EODHDService:
             # Fetch list of tickers from API
             async with self.api_client as api_client:
                 list_of_current_tickers = await api_client.get_tickers(exchange)
-                list_of_delisted_tickers = await api_client.get_tickers(exchange, delisted=True)
+                list_of_delisted_tickers = await api_client.get_tickers(
+                    exchange, delisted=True
+                )
                 list_of_all_tickers = list_of_current_tickers + list_of_delisted_tickers
 
             # Process each ticker
@@ -179,22 +203,41 @@ class EODHDService:
                     try:
                         await log.adebug("Processing ticker: '%s'", ticker["code"])
                         async with self.unit_of_work() as uow:
-                            if not await uow.financial_instrument.get_ticker(ticker["code"]):
-                                await log.adebug("Adding financial instrument '%s' to database.", ticker["code"])
-                                raw_list_of_historical_data = await api_client.get_historical_data(ticker["code"])
+                            if not await uow.financial_instrument.get_ticker(
+                                ticker["code"]
+                            ):
+                                await log.adebug(
+                                    "Adding financial instrument '%s' to database.",
+                                    ticker["code"],
+                                )
+                                raw_list_of_historical_data = (
+                                    await api_client.get_historical_data(ticker["code"])
+                                )
 
-                                formatted_ticker = models.FinancialInstrumentAR.format_ticker(ticker)
+                                formatted_ticker = (
+                                    models.FinancialInstrumentAR.format_ticker(ticker)
+                                )
                                 formatted_historical_data = []
                                 for date in raw_list_of_historical_data:
-                                    historical_data_object = models.FinancialInstrumentAR.format_historical_data(date)
-                                    formatted_historical_data.append(historical_data_object)
+                                    historical_data_object = models.FinancialInstrumentAR.format_historical_data(
+                                        date
+                                    )
+                                    formatted_historical_data.append(
+                                        historical_data_object
+                                    )
 
-                                await uow.financial_instrument.add_ticker(formatted_ticker)
+                                await uow.financial_instrument.add_ticker(
+                                    formatted_ticker
+                                )
                                 await uow.commit()
-                                await uow.financial_instrument.add_historical_data_bulk(formatted_historical_data)
+                                await uow.financial_instrument.add_historical_data_bulk(
+                                    formatted_historical_data
+                                )
                                 await uow.commit()
                     except Exception:
-                        await log.aexception("Error processing ticker: '%s'", ticker["code"])
+                        await log.aexception(
+                            "Error processing ticker: '%s'", ticker["code"]
+                        )
                         raise
 
                 processing_tasks.append(process_ticker())
@@ -202,7 +245,9 @@ class EODHDService:
             # Execute tasks concurrently
             await asyncio.gather(*processing_tasks)
         except Exception:
-            await log.aexception("Error scanning for new tickers in exchange: '%s'", exchange)
+            await log.aexception(
+                "Error scanning for new tickers in exchange: '%s'", exchange
+            )
             raise
 
     async def scan_end_of_day_data(self, exchange: str) -> None:
@@ -216,7 +261,9 @@ class EODHDService:
             - Exception: If an error occurs during the scanning.
         """
         try:
-            await log.adebug("Scanning for end-of-day data for exchange: '%s'", exchange)
+            await log.adebug(
+                "Scanning for end-of-day data for exchange: '%s'", exchange
+            )
             processing_tasks = []
 
             # Fetch end-of-day data from API
@@ -229,23 +276,37 @@ class EODHDService:
                 async def process_eod_data(data: dict = data) -> None:
                     try:
                         await log.adebug("Processing end-of-day data.")
-                        raw_historical_data, raw_technical_data = models.FinancialInstrumentAR.filter_end_of_day_data(
-                            data
+                        raw_historical_data, raw_technical_data = (
+                            models.FinancialInstrumentAR.filter_end_of_day_data(data)
                         )
-                        formatted_historical_data = models.FinancialInstrumentAR.format_historical_data(
-                            raw_historical_data
+                        formatted_historical_data = (
+                            models.FinancialInstrumentAR.format_historical_data(
+                                raw_historical_data
+                            )
                         )
-                        formatted_technical_data = models.FinancialInstrumentAR.format_technical_data(
-                            raw_technical_data
+                        formatted_technical_data = (
+                            models.FinancialInstrumentAR.format_technical_data(
+                                raw_technical_data
+                            )
                         )
 
                         async with self.unit_of_work() as uow:
-                            await uow.financial_instrument.add_historical_data(formatted_historical_data)
-                            existing = await uow.financial_instrument.get_technical_data(formatted_technical_data.code)
+                            await uow.financial_instrument.add_historical_data(
+                                formatted_historical_data
+                            )
+                            existing = (
+                                await uow.financial_instrument.get_technical_data(
+                                    formatted_technical_data.code
+                                )
+                            )
                             if existing:
-                                await uow.financial_instrument.update_technical_data(formatted_technical_data)
+                                await uow.financial_instrument.update_technical_data(
+                                    formatted_technical_data
+                                )
                             else:
-                                await uow.financial_instrument.add_technical_data(formatted_technical_data)
+                                await uow.financial_instrument.add_technical_data(
+                                    formatted_technical_data
+                                )
                             await uow.commit()
                     except Exception:
                         await log.aexception("Error processing end-of-day data.")
@@ -256,7 +317,9 @@ class EODHDService:
             # Execute tasks concurrently
             await asyncio.gather(*processing_tasks)
         except Exception:
-            await log.aexception("Error updating end-of-day data for exchange: '%s'", exchange)
+            await log.aexception(
+                "Error updating end-of-day data for exchange: '%s'", exchange
+            )
             raise
 
 
@@ -299,7 +362,9 @@ class RabbitMQService:
         async with self.event_bus:
             try:
                 # Load event handlers from entry points
-                entry_points = metadata.entry_points().select(group="finance_tool.event_handlers")
+                entry_points = metadata.entry_points().select(
+                    group="finance_tool.event_handlers"
+                )
 
                 for entry_point in entry_points:
                     try:
@@ -310,7 +375,8 @@ class RabbitMQService:
                         # Validate that the handler inherits from AbstractEventHandler
                         if not isinstance(handler_instance, AbstractEventHandler):
                             await log.aerror(
-                                "Handler '%s' does not inherit from 'AbstractEventHandler'.", handler_class.__name__
+                                "Handler '%s' does not inherit from 'AbstractEventHandler'.",
+                                handler_class.__name__,
                             )
                             continue
 
@@ -320,9 +386,15 @@ class RabbitMQService:
 
                         # Subscribe the handler to the event type
                         await self.event_bus.subscribe(event_type, handler)
-                        await log.adebug("Subscribed to event '%s' with handler '%s'.", event_type, handler.__name__)
+                        await log.adebug(
+                            "Subscribed to event '%s' with handler '%s'.",
+                            event_type,
+                            handler.__name__,
+                        )
                     except Exception:
-                        await log.aexception("Failed to load handler '%s'.", entry_point.name)
+                        await log.aexception(
+                            "Failed to load handler '%s'.", entry_point.name
+                        )
                         raise
 
                 await log.ainfo("Application is now running.")
@@ -350,7 +422,11 @@ class TimeSeriesForecastingService:
         self.unit_of_work = unit_of_work
 
     def model_to_dict(self, model: object) -> dict:
-        return {key: value for key, value in model.__dict__.items() if not key.startswith("_")}
+        return {
+            key: value
+            for key, value in model.__dict__.items()
+            if not key.startswith("_")
+        }
 
     async def fetch_all_tickers_with_dataframes(self) -> list[tuple]:
         list_of_tuples_containing_dataframes = []
@@ -358,16 +434,25 @@ class TimeSeriesForecastingService:
         async with self.unit_of_work() as uow:
             all_tickers = await uow.financial_instrument.get_ticker(all=True)
             for ticker in all_tickers:
-                technical_data = await uow.financial_instrument.get_technical_data(ticker.code)
+                technical_data = await uow.financial_instrument.get_technical_data(
+                    ticker.code
+                )
                 technical_dict = [self.model_to_dict(technical_data)]
 
                 historical_data_list = []
-                historical_data = await uow.financial_instrument.get_historical_data(ticker.code)
+                historical_data = await uow.financial_instrument.get_historical_data(
+                    ticker.code
+                )
                 for model in historical_data:
                     historical_dict = [self.model_to_dict(model)]
                     historical_data_list.append(historical_dict)
 
-                list_of_tuples_containing_dataframes.append((historical_data_list, technical_dict))
+                list_of_tuples_containing_dataframes.append(
+                    (
+                        historical_data_list,
+                        technical_dict,
+                    )
+                )
 
         return list_of_tuples_containing_dataframes
 
@@ -396,7 +481,9 @@ class TimeSeriesForecastingService:
                 .order_by(models.HistoricalData.code, models.HistoricalData.date)
             )
             async with self.unit_of_work() as uow:
-                dataframe = asyncio.to_thread(pl.read_sql, query, uow.session.connection(), parse_dates=["ds"])
+                dataframe = asyncio.to_thread(
+                    pl.read_sql, query, uow.session.connection(), parse_dates=["ds"]
+                )
         except SQLAlchemyError:
             await log.aexception("Error occurred when querying database.")
             raise
@@ -418,7 +505,9 @@ class TimeSeriesForecastingService:
         """
         try:
             stock_codes = await self.get_filtered_instruments("stock")
-            crypto_codes = await self.get_filtered_instruments("crypto", beta_filter=False)
+            crypto_codes = await self.get_filtered_instruments(
+                "crypto", beta_filter=False
+            )
 
             stocks_df = await self.create_time_series_df(stock_codes)
             cryptos_df = await self.create_time_series_df(crypto_codes)
@@ -483,10 +572,15 @@ class JobSchedulingService:
 
             # Schedule the job to run every 24 hours
             self.scheduler.add_job(
-                func=publish_update, trigger="interval", hours=24, name="daily update of financial instruments"
+                func=publish_update,
+                trigger="interval",
+                hours=24,
+                name="daily update of financial instruments",
             )
         except Exception:
-            log.exception("Error scheduling job 'daily update of financial instruments'.")
+            log.exception(
+                "Error scheduling job 'daily update of financial instruments'."
+            )
             raise
 
     async def start_job_schedulers(self) -> None:

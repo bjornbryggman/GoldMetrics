@@ -85,7 +85,9 @@ class RedisEventStoreAdapter(ports.AbstractEventStore):
         try:
             # Check if the event ID exists in Redis
             exists = await self.redis.exists(event_id)
-            await log.adebug("Checked if event '%s' is processed: %s", event_id, exists == 1)
+            await log.adebug(
+                "Checked if event '%s' is processed: %s", event_id, exists == 1
+            )
         except redis.asyncio.RedisError:
             await log.aexception("Error checking if event '%s' is processed.", event_id)
             raise
@@ -158,7 +160,10 @@ class RabbitMQEventBusAdapter(ports.AbstractEventBus):
     """
 
     def __init__(
-        self, rabbitmq_url: str, event_store: ports.AbstractEventStore, exchange_name: str = "events_exchange"
+        self,
+        rabbitmq_url: str,
+        event_store: ports.AbstractEventStore,
+        exchange_name: str = "events_exchange",
     ) -> None:
         """
         Initialize the EventBusRabbitMQ.
@@ -173,7 +178,9 @@ class RabbitMQEventBusAdapter(ports.AbstractEventBus):
         self.connection: aio_pika.RobustConnection | None = None
         self.channel: aio_pika.RobustChannel | None = None
         self.exchange: aio_pika.Exchange | None = None
-        self.subscriptions: list[tuple[str, Callable[[dict[str, Any]], Coroutine[Any, Any, None]]]] = []
+        self.subscriptions: list[
+            tuple[str, Callable[[dict[str, Any]], Coroutine[Any, Any, None]]]
+        ] = []
         self.event_store = event_store
 
     async def connect(self) -> None:
@@ -235,7 +242,11 @@ class RabbitMQEventBusAdapter(ports.AbstractEventBus):
             await log.aexception("Failed to publish event '%s'.", event_name)
             raise
 
-    async def subscribe(self, event_name: str, handler: Callable[[dict[str, Any]], Coroutine[Any, Any, None]]) -> None:
+    async def subscribe(
+        self,
+        event_name: str,
+        handler: Callable[[dict[str, Any]], Coroutine[Any, Any, None]],
+    ) -> None:
         """
         Subscribe to an event and process it with the provided handler.
 
@@ -249,12 +260,17 @@ class RabbitMQEventBusAdapter(ports.AbstractEventBus):
         await self.connect()
 
         # Declare a queue for the event
-        queue = await self.channel.declare_queue(name=f"{event_name}_queue", durable=True, auto_delete=False)
+        queue = await self.channel.declare_queue(
+            name=f"{event_name}_queue", durable=True, auto_delete=False
+        )
 
         # Bind the queue to the exchange with the specified routing key
         await queue.bind(self.exchange, routing_key=event_name)
         await log.ainfo(
-            "Queue '%s' bound to exchange '%s' with routing key '%s'.", queue.name, self.exchange_name, event_name
+            "Queue '%s' bound to exchange '%s' with routing key '%s'.",
+            queue.name,
+            self.exchange_name,
+            event_name,
         )
 
         async def on_message(message: aio_pika.abc.AbstractIncomingMessage) -> None:
@@ -266,17 +282,24 @@ class RabbitMQEventBusAdapter(ports.AbstractEventBus):
 
                     # Check for event_id and handle duplicate events
                     if not event_id:
-                        await log.aerror("Received event without event_id. Rejecting message.")
+                        await log.aerror(
+                            "Received event without event_id. Rejecting message."
+                        )
                         await message.reject(requeue=False)
                         return
                     if await self.event_store.is_processed(event_id):
-                        await log.ainfo("Duplicate event '%s' received. Skipping processing.", event_id)
+                        await log.ainfo(
+                            "Duplicate event '%s' received. Skipping processing.",
+                            event_id,
+                        )
                         return
 
                     # Process the event with the provided handler
                     await handler(data)
                     await self.event_store.mark_as_processed(event_id)
-                    await log.ainfo("Event '%s' processed and marked as processed.", event_id)
+                    await log.ainfo(
+                        "Event '%s' processed and marked as processed.", event_id
+                    )
 
                 except json.JSONDecodeError:
                     await log.aexception("Invalid JSON in message.")

@@ -12,6 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from backend.app.infrastructure.adapters.unit_of_work import SQLAlchemyUnitOfWorkAdapter
 
+
 class TestSQLAlchemyUnitOfWorkAdapter:
     """
     Tests for the `SQLAlchemyUnitOfWorkAdapter` class.
@@ -25,6 +26,7 @@ class TestSQLAlchemyUnitOfWorkAdapter:
         - test_uow_session_isolation: Tests that the UnitOfWork maintains session isolation.
         - test_uow_fi_repository_integration: Tests that the UnitOfWork properly handles data related to the `SQLAlchemyFIARRepositoryAdapter`.
     """
+
     # ====================================== #
     #               Unit Tests               #
     # ====================================== #
@@ -40,13 +42,19 @@ class TestSQLAlchemyUnitOfWorkAdapter:
         Raises:
             - AssertionError: If the session is not committed or the error is not raised.
         """
-        async with SQLAlchemyUnitOfWorkAdapter(mock_dependencies.session_factory) as uow_1:
+        async with SQLAlchemyUnitOfWorkAdapter(
+            mock_dependencies.session_factory
+        ) as uow_1:
             await uow_1.commit()
         mock_dependencies.session.commit.assert_awaited_once()
 
-        mock_dependencies.session.commit.side_effect = SQLAlchemyError("Error committing database session.")
+        mock_dependencies.session.commit.side_effect = SQLAlchemyError(
+            "Error committing database session."
+        )
         with pytest.raises(SQLAlchemyError, match="Error committing database session."):
-            async with SQLAlchemyUnitOfWorkAdapter(mock_dependencies.session_factory) as uow_2:
+            async with SQLAlchemyUnitOfWorkAdapter(
+                mock_dependencies.session_factory
+            ) as uow_2:
                 await uow_2.commit()
 
     async def test_uow_rollback(self, mock_dependencies):
@@ -63,13 +71,21 @@ class TestSQLAlchemyUnitOfWorkAdapter:
         Raises:
             - AssertionError: If the session is not rolled back or the error is not raised.
         """
-        async with SQLAlchemyUnitOfWorkAdapter(mock_dependencies.session_factory) as uow_1:
+        async with SQLAlchemyUnitOfWorkAdapter(
+            mock_dependencies.session_factory
+        ) as uow_1:
             await uow_1.rollback()
         mock_dependencies.session.rollback.assert_awaited_once()
 
-        mock_dependencies.session.rollback.side_effect = SQLAlchemyError("Error rolling back database session.")
-        with pytest.raises(SQLAlchemyError, match="Error rolling back database session."):
-            async with SQLAlchemyUnitOfWorkAdapter(mock_dependencies.session_factory) as uow_2:
+        mock_dependencies.session.rollback.side_effect = SQLAlchemyError(
+            "Error rolling back database session."
+        )
+        with pytest.raises(
+            SQLAlchemyError, match="Error rolling back database session."
+        ):
+            async with SQLAlchemyUnitOfWorkAdapter(
+                mock_dependencies.session_factory
+            ) as uow_2:
                 await uow_2.rollback()
 
     async def test_uow_aenter(self, mock_dependencies):
@@ -84,14 +100,20 @@ class TestSQLAlchemyUnitOfWorkAdapter:
         Raises:
             - AssertionError: If the session is not initialized or the error is not raised.
         """
-        async with SQLAlchemyUnitOfWorkAdapter(mock_dependencies.session_factory) as unit_of_work:
+        async with SQLAlchemyUnitOfWorkAdapter(
+            mock_dependencies.session_factory
+        ) as unit_of_work:
             pass
         mock_dependencies.session_factory.assert_called_once()
         mock_dependencies.session.__aenter__.assert_awaited_once()
         assert unit_of_work.financial_instrument is not None
 
-        mock_dependencies.session_factory.side_effect = SQLAlchemyError("Error initializing database session.")
-        with pytest.raises(SQLAlchemyError, match="Error initializing database session."):
+        mock_dependencies.session_factory.side_effect = SQLAlchemyError(
+            "Error initializing database session."
+        )
+        with pytest.raises(
+            SQLAlchemyError, match="Error initializing database session."
+        ):
             async with SQLAlchemyUnitOfWorkAdapter(mock_dependencies.session_factory):
                 pass
 
@@ -110,7 +132,9 @@ class TestSQLAlchemyUnitOfWorkAdapter:
             pass
         mock_dependencies.session.__aexit__.assert_awaited_once()
 
-        mock_dependencies.session.__aexit__.side_effect = SQLAlchemyError("Error closing database session.")
+        mock_dependencies.session.__aexit__.side_effect = SQLAlchemyError(
+            "Error closing database session."
+        )
         with pytest.raises(SQLAlchemyError, match="Error closing database session."):
             async with SQLAlchemyUnitOfWorkAdapter(mock_dependencies.session_factory):
                 pass
@@ -120,7 +144,9 @@ class TestSQLAlchemyUnitOfWorkAdapter:
     # ============================================= #
 
     @pytest.mark.integration
-    async def test_uow_rolls_back_on_error(self, formatted_fi_test_data, real_dependencies):
+    async def test_uow_rolls_back_on_error(
+        self, formatted_fi_test_data, real_dependencies
+    ):
         """
         Test that the unit of work rolls back on error.
 
@@ -144,13 +170,15 @@ class TestSQLAlchemyUnitOfWorkAdapter:
                 raise Exception
         except Exception:
             pass
-        
+
         async with unit_of_work() as uow_2:
-                fetched_data = await uow_2.financial_instrument.get_ticker("ABC")
-                assert fetched_data is None
+            fetched_data = await uow_2.financial_instrument.get_ticker("ABC")
+            assert fetched_data is None
 
     @pytest.mark.integration
-    async def test_uow_session_isolation(self, formatted_fi_test_data, real_dependencies):
+    async def test_uow_session_isolation(
+        self, formatted_fi_test_data, real_dependencies
+    ):
         """
         Test that the unit of work maintains session isolation.
 
@@ -175,7 +203,9 @@ class TestSQLAlchemyUnitOfWorkAdapter:
             assert fetched_data is None
 
     @pytest.mark.integration
-    async def test_uow_fi_repository_integration(self, formatted_fi_test_data, real_dependencies):
+    async def test_uow_fi_repository_integration(
+        self, formatted_fi_test_data, real_dependencies
+    ):
         """
         Test that the UnitOfWork properly handles data related to the `SQLAlchemyFIARRepositoryAdapter`.
 
@@ -211,9 +241,21 @@ class TestSQLAlchemyUnitOfWorkAdapter:
         async with unit_of_work() as uow_2:
             fetched_exchange = await uow_2.financial_instrument.get_exchange("NYSE")
             fetched_ticker = await uow_2.financial_instrument.get_ticker("ABC")
-            fetched_historical_data = await uow_2.financial_instrument.get_historical_data("ABC", start_date, end_date)
-            fetched_technical_data = await uow_2.financial_instrument.get_technical_data("ABC")
-            bundled_ticker_data, bundled_technical_data, bundled_historical_data = await uow_2.financial_instrument.get_ticker_with_technical_and_historical_data("ABC", start_date, end_date)
+            fetched_historical_data = (
+                await uow_2.financial_instrument.get_historical_data(
+                    "ABC", start_date, end_date
+                )
+            )
+            fetched_technical_data = (
+                await uow_2.financial_instrument.get_technical_data("ABC")
+            )
+            (
+                bundled_ticker_data,
+                bundled_technical_data,
+                bundled_historical_data,
+            ) = await uow_2.financial_instrument.get_ticker_with_technical_and_historical_data(
+                "ABC", start_date, end_date
+            )
             assert fetched_exchange.code == "NYSE"
             assert fetched_ticker.code == "ABC"
             assert len(fetched_historical_data) == 2
@@ -231,8 +273,14 @@ class TestSQLAlchemyUnitOfWorkAdapter:
             assert updated_data.code == "ABC"
             assert updated_data.Beta == 2.4
 
-            non_existing_data = await uow_4.financial_instrument.get_ticker_with_technical_and_historical_data("NOTEXIST")
-            non_existing_ticker_data, non_existing_technical_data, non_existing_historical_data = non_existing_data
+            non_existing_data = await uow_4.financial_instrument.get_ticker_with_technical_and_historical_data(
+                "NOTEXIST"
+            )
+            (
+                non_existing_ticker_data,
+                non_existing_technical_data,
+                non_existing_historical_data,
+            ) = non_existing_data
             assert non_existing_ticker_data is None
             assert non_existing_technical_data is None
             assert len(non_existing_historical_data) == 0

@@ -9,9 +9,9 @@ This module includes:
 
 import pytest
 from sqlalchemy.exc import ArgumentError
-from sqlalchemy.orm import clear_mappers
 
 from backend.app.infrastructure.database import orm
+
 
 class TestORM:
     """
@@ -21,6 +21,7 @@ class TestORM:
         - test_remapping_failure: Tests that attempting to remap the database after it has already been mapped raises an ArgumentError.
         - test_successful_database_mapping: Tests that the database mapping is successful and includes the expected tables.
     """
+
     # ====================================== #
     #               Unit Tests               #
     # ====================================== #
@@ -49,7 +50,7 @@ class TestORM:
         Raises:
             - AssertionError: If the expected tables are not present in the mapper registry.
         """
-        assert 'exchange' in orm.mapper_registry.metadata.tables
-        assert 'tickers' in orm.mapper_registry.metadata.tables
-        assert 'historical_data' in orm.mapper_registry.metadata.tables
-        assert 'technical_data' in orm.mapper_registry.metadata.tables
+        assert "exchange" in orm.mapper_registry.metadata.tables
+        assert "tickers" in orm.mapper_registry.metadata.tables
+        assert "historical_data" in orm.mapper_registry.metadata.tables
+        assert "technical_data" in orm.mapper_registry.metadata.tables
