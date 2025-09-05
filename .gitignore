@@ -8,3 +8,10 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Miscellaneous
+.idea
+.TODO
+.vscode
+.github
+docs

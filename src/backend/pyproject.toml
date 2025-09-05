@@ -1,0 +1,36 @@
+[project]
+name = "GoldMetrics"
+version = "0.1.0"
+description = "TBD"
+requires-python = ">=3.13"
+dependencies = [
+    "libcst>=1.8.2",
+    "polars>=1.32.3",
+    "slpp>=1.2.3",
+    "structlog>=25.4.0",
+]
+readme = "README"
+license = { file = "LICENSE" }
+[project.urls]
+repository = "https://github.com/bjornbryggman/GoldMetrics.git"
+[project.entry-points."finance_tool.event_handlers"]
+financial_instruments_update = "backend.app.application.event_handlers:EODHDHandler"
+notifications = "backend.app.application.event_handlers:NotificationHandler"
+
+[dependency-groups]
+dev = [
+    "coverage>=7.10.6",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "pytest-cov>=6.2.1",
+    "ruff>=0.12.11",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["*tests*"]
+addopts = "--tb=line"
+markers = ["integration: integration tests that require real functionality."]
+xfail_strict = true
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = ["error"]

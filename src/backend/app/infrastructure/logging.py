@@ -46,15 +46,14 @@ async def initialize_logger(log_level: str) -> None:
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
             structlog.processors.UnicodeDecoder(),
-            structlog.processors.CallsiteParameterAdder({
-                structlog.processors.CallsiteParameter.FILENAME,
-                structlog.processors.CallsiteParameter.FUNC_NAME,
-                structlog.processors.CallsiteParameter.LINENO,
-            }),
-            # Add category into message if provided
-            structlog.processors.KeyValueRenderer(key_order=["timestamp", "level", "category", "event"]),
-            # Or swap the above with JSONRenderer if you want structured JSON
-            # structlog.processors.JSONRenderer(),
+            structlog.processors.CallsiteParameterAdder(
+                {
+                    structlog.processors.CallsiteParameter.FILENAME,
+                    structlog.processors.CallsiteParameter.FUNC_NAME,
+                    structlog.processors.CallsiteParameter.LINENO,
+                }
+            ),
+            structlog.processors.JSONRenderer(),
         ],
         wrapper_class=structlog.stdlib.BoundLogger,
         logger_factory=structlog.stdlib.LoggerFactory(),
@@ -62,4 +61,6 @@ async def initialize_logger(log_level: str) -> None:
     )
 
     # Configure the logging level and output format
-    logging.basicConfig(format="%(message)s", stream=sys.stdout, level=log_level, force=True)
+    logging.basicConfig(
+        format="%(message)s", stream=sys.stdout, level=log_level, force=True
+    )
